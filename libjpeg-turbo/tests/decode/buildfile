@@ -1,0 +1,3 @@
+import libs = libjpeg-turbo%lib{jpeg}
+
+exe{driver}: c{driver} $libs
