@@ -18,5 +18,5 @@ package-url: https://github.com/build2-packaging/libjpeg-turbo
 package-email: packaging@build2.org ; Mailing list.
 email: libjpeg-turbo-users@googlegroups.com ; Mailing list.
 build-error-email: builds@build2.org
-depends: * build2 >= 0.15.0
-depends: * bpkg >= 0.15.0
+depends: * build2 >= 0.18.0
+depends: * bpkg >= 0.18.0
