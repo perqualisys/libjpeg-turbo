@@ -42,3 +42,15 @@ For all these reasons this package emulates the v6b API/ABI.
 
 - If we decide to package the utilities too, include upstream/usage.txt in the
   distribution.
+
+4. SIMD extensions
+
+Upstream accelerates most of the codec with SIMD extensions (simd/), which it
+builds by default (WITH_SIMD) for the targets it supports. This package
+currently builds them only on x86-64, where they are NASM sources assembled
+with the nasm package (a build-time dependency) and simd/jsimd.c selects SSE2
+or AVX2 at run time. On other targets, or with config.libjpeg_turbo.simd=false,
+the library uses upstream's C code paths, as it does when SIMD is unavailable.
+
+The Arm Neon extensions (simd/arm/) are C intrinsics and need no new
+dependency. The i386 ones (simd/i386/) are NASM sources, like x86-64.

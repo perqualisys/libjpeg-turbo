@@ -4,7 +4,16 @@
 linux   = ($c.target.class == 'linux')
 bsd     = ($c.target.class == 'bsd')
 windows = ($c.target.class == 'windows')
+macos   = ($c.target.class == 'macos')
 msvc    = ($c.class == 'msvc')
+
+# The SIMD extensions. On x86-64 they are NASM sources, and the dispatcher
+# (simd/jsimd.c) selects SSE2 or AVX2 at run time, so one build serves every
+# x86-64 CPU. Elsewhere the library is built without them for now.
+#
+# @@ TODO: Arm Neon (simd/arm/, C intrinsics) and i386 (simd/i386/, NASM).
+#
+simd = ($config.libjpeg_turbo.simd && $c.target.cpu == 'x86_64')
 
 # The libjpeg API sources, as upstream's JPEG_SOURCES in CMakeLists.txt, with
 # arithmetic coding enabled.
@@ -74,6 +83,77 @@ lib{jpeg}: win/def{jpeg62}: include = $windows
 define vsc: file
 vsc{*}: extension = map
 libs{jpeg}: src/vsc{libjpeg}: include = ($linux || $bsd ? adhoc : false)
+
+# x86-64 SIMD extensions.
+#
+# The build graph is the same with and without them (so that the distribution
+# is complete either way): only what is included differs.
+#
+if $simd
+  import! nasm = nasm%exe{nasm}
+
+define asm: file
+asm{*}: extension = asm
+
+asm_src = jsimdcpu jfdctflt-sse                                               \
+          jccolor-sse2 jcgray-sse2 jchuff-sse2 jcphuff-sse2 jcsample-sse2     \
+          jdcolor-sse2 jdmerge-sse2 jdsample-sse2 jfdctfst-sse2               \
+          jfdctint-sse2 jidctflt-sse2 jidctfst-sse2 jidctint-sse2             \
+          jidctred-sse2 jquantf-sse2 jquanti-sse2                             \
+          jccolor-avx2 jcgray-avx2 jcsample-avx2 jdcolor-avx2 jdmerge-avx2    \
+          jdsample-avx2 jfdctint-avx2 jidctint-avx2 jquanti-avx2
+
+# The NASM options, as upstream's simd/CMakeLists.txt sets them. The objects
+# are always position-independent: upstream makes them so for the shared
+# library, and the static library may end up in one too.
+#
+if $windows
+  nasm_options = -fwin64 -DWIN64
+elif $macos
+  nasm_options = -fmacho64 -DMACHO
+else
+  nasm_options = -felf64 -DELF -DPIC
+
+nasm_options += -D__x86_64__                                                  \
+                "-I$src_base/simd/nasm/" "-I$src_base/simd/x86_64/"
+
+# The object file target types have no default extension (the cc module names
+# its objects itself), so spell them out, distinct so that the static and
+# shared objects don't clobber each other.
+#
+obj_ext = ($windows ? obj : o)
+asm_a =
+asm_s =
+
+for n: $asm_src
+{
+  a = "$(n).a.$obj_ext"
+  s = "$(n).so.$obj_ext"
+  asm_a += $a
+  asm_s += $s
+
+  simd/obja{$a}: simd/x86_64/asm{$n} $nasm
+  simd/objs{$s}: simd/x86_64/asm{$n} $nasm
+}
+
+# Note that the NASM sources' includes (simd/nasm/*.inc and the
+# simd/x86_64/*ext*.asm files) are not tracked as dependencies.
+#
+simd/obja{$asm_a} simd/objs{$asm_s}:
+{{
+  diag nasm ($<[0]) -> $>
+  $nasm $nasm_options -o $path($>) $path($<[0])
+}}
+
+liba{jpeg}: simd/obja{$asm_a}: include = $simd
+libs{jpeg}: simd/objs{$asm_s}: include = $simd
+
+lib{jpeg}: simd/c{jsimd} simd/h{jsimd jsimdconst jsimddct jsimdint}:          \
+  include = ($simd ? true : adhoc)
+
+lib{jpeg}: simd/x86_64/asm{*} simd/nasm/file{*.inc}: include = adhoc
+
+simd/h{*}: install = false
 
 # Generated headers.
 #
@@ -157,7 +237,7 @@ src/h{jconfigint}: src/in{jconfigint}
 
   HAVE_INTRIN_H = $msvc
 
-  SIMD_ARCHITECTURE = NONE
+  SIMD_ARCHITECTURE = ($simd ? X86_64 : NONE)
   WITH_SIMDE = false
 
   WITH_PROFILE = false
@@ -190,7 +270,7 @@ src/h{jconfig} src/h{jconfigint}:
   C_ARITH_CODING_SUPPORTED = true
   D_ARITH_CODING_SUPPORTED = true
 
-  WITH_SIMD = false
+  WITH_SIMD = $simd
 }
 
 # Linker version script.
