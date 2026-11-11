@@ -1,13 +1,13 @@
+# Uncomment to suppress warnings coming from external libraries.
+#
+#c.internal.scope = current
+
 using in
 
 using c
 
 h{*}: extension = h
 c{*}: extension = c
-
-# Assume headers are importable unless stated otherwise.
-#
-h{*}: c.importable = true
 
 # The test target for cross-testing (running tests under Wine, etc).
 #
