@@ -1,1 +1,1 @@
-../upstream/libjpeg.txt
+../upstream/doc/libjpeg.txt
