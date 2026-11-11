@@ -4,85 +4,76 @@
 linux   = ($c.target.class == 'linux')
 bsd     = ($c.target.class == 'bsd')
 windows = ($c.target.class == 'windows')
+msvc    = ($c.class == 'msvc')
 
-# Use a list because many sources files are included instead of compiled.
+# The libjpeg API sources, as upstream's JPEG_SOURCES in CMakeLists.txt, with
+# arithmetic coding enabled.
 #
-src = jaricom   \
-      jcapimin  \
-      jcapistd  \
-      jcarith   \
-      jccoefct  \
-      jccolor   \
-      jcdctmgr  \
-      jchuff    \
-      jcicc     \
-      jcinit    \
-      jcmainct  \
-      jcmarker  \
-      jcmaster  \
-      jcomapi   \
-      jcparam   \
-      jcphuff   \
-      jcprepct  \
-      jcsample  \
-      jctrans   \
-      jdapimin  \
-      jdapistd  \
-      jdarith   \
-      jdatadst  \
-      jdatasrc  \
-      jdcoefct  \
-      jdcolor   \
-      jddctmgr  \
-      jdhuff    \
-      jdicc     \
-      jdinput   \
-      jdmainct  \
-      jdmarker  \
-      jdmaster  \
-      jdmerge   \
-      jdphuff   \
-      jdpostct  \
-      jdsample  \
-      jdtrans   \
-      jerror    \
-      jfdctflt  \
-      jfdctfst  \
-      jfdctint  \
-      jidctflt  \
-      jidctfst  \
-      jidctint  \
-      jidctred  \
-      jquant1   \
-      jquant2   \
-      jutils    \
-      jmemmgr   \
-      jmemnobs
+# Since 3.0 the data precision dependent sources are compiled once for each
+# precision (8, 12 and 16 bits) through the wrappers in src/wrapper/, which
+# set BITS_IN_JSAMPLE and include the source from src/.
+#
+src = jcapimin wrapper/jcapistd-8 wrapper/jcapistd-12 wrapper/jcapistd-16     \
+      wrapper/jccoefct-8 wrapper/jccoefct-12                                  \
+      wrapper/jccolor-8 wrapper/jccolor-12 wrapper/jccolor-16                 \
+      wrapper/jcdctmgr-8 wrapper/jcdctmgr-12                                  \
+      wrapper/jcdiffct-8 wrapper/jcdiffct-12 wrapper/jcdiffct-16              \
+      jchuff jcicc jcinit jclhuff                                             \
+      wrapper/jclossls-8 wrapper/jclossls-12 wrapper/jclossls-16              \
+      wrapper/jcmainct-8 wrapper/jcmainct-12 wrapper/jcmainct-16              \
+      jcmarker jcmaster jcomapi jcparam jcphuff                               \
+      wrapper/jcprepct-8 wrapper/jcprepct-12 wrapper/jcprepct-16              \
+      wrapper/jcsample-8 wrapper/jcsample-12 wrapper/jcsample-16              \
+      jctrans jdapimin                                                        \
+      wrapper/jdapistd-8 wrapper/jdapistd-12 wrapper/jdapistd-16              \
+      jdatadst jdatasrc                                                       \
+      wrapper/jdcoefct-8 wrapper/jdcoefct-12                                  \
+      wrapper/jdcolor-8 wrapper/jdcolor-12 wrapper/jdcolor-16                 \
+      wrapper/jddctmgr-8 wrapper/jddctmgr-12                                  \
+      wrapper/jddiffct-8 wrapper/jddiffct-12 wrapper/jddiffct-16              \
+      jdhuff jdicc jdinput jdlhuff                                            \
+      wrapper/jdlossls-8 wrapper/jdlossls-12 wrapper/jdlossls-16              \
+      wrapper/jdmainct-8 wrapper/jdmainct-12 wrapper/jdmainct-16              \
+      jdmarker jdmaster                                                       \
+      wrapper/jdmerge-8 wrapper/jdmerge-12                                    \
+      jdphuff                                                                 \
+      wrapper/jdpostct-8 wrapper/jdpostct-12 wrapper/jdpostct-16              \
+      wrapper/jdsample-8 wrapper/jdsample-12 wrapper/jdsample-16              \
+      jdtrans jerror jfdctflt                                                 \
+      wrapper/jfdctfst-8 wrapper/jfdctfst-12                                  \
+      wrapper/jfdctint-8 wrapper/jfdctint-12                                  \
+      wrapper/jidctflt-8 wrapper/jidctflt-12                                  \
+      wrapper/jidctfst-8 wrapper/jidctfst-12                                  \
+      wrapper/jidctint-8 wrapper/jidctint-12                                  \
+      wrapper/jidctred-8 wrapper/jidctred-12                                  \
+      jmemmgr jmemnobs jpeg_nbits                                             \
+      wrapper/jquant1-8 wrapper/jquant1-12                                    \
+      wrapper/jquant2-8 wrapper/jquant2-12                                    \
+      wrapper/jutils-8 wrapper/jutils-12 wrapper/jutils-16                    \
+      jaricom jcarith jdarith
 
-# Add this source file if SIMD is disabled, otherwise add the sources in
-# simd/.
+# The sources that the above include rather than being compiled themselves.
 #
-# @@ TODO Enable SIMD once we are able to compile ASM.
-#
-src += jsimd_none
+inc = jcapistd jccoefct jccolext jccolor jcdctmgr jcdiffct jclossls jcmainct  \
+      jcprepct jcsample jdapistd jdcoefct jdcol565 jdcolext jdcolor jddctmgr  \
+      jddiffct jdlossls jdmainct jdmerge jdmrg565 jdmrgext jdpostct jdsample  \
+      jfdctfst jfdctint jidctflt jidctfst jidctint jidctred jquant1 jquant2   \
+      jstdhuff jutils
 
-# Headers and source files.
-#
-lib{jpeg}: h{** -jconfig -jversion -jconfigint} \
-           h{jconfig jversion jconfigint} c{$src}
+lib{jpeg}: src/h{* -jconfig -jconfigint -jversion}                           \
+           src/h{jconfig jconfigint jversion}                                 \
+           src/c{$src}
 
-# Ensure included source files and CMakeLists.txt are distributed.
-#
-lib{jpeg}: c{** -{$src}}: include = adhoc
-lib{jpeg}: file{CMakeLists.txt}
+lib{jpeg}: src/c{$inc}: include = adhoc
 
-# Linker version script and module definition files.
+# Module definition file (the libjpeg v6b API, which includes the in-memory
+# source and destination managers) and Linux/BSD linker version script.
 #
+lib{jpeg}: win/def{jpeg62}: include = $windows
+
 define vsc: file
 vsc{*}: extension = map
-libs{jpeg}: vsc{libjpeg}: include = ($linux || $bsd ? adhoc : false)
-
-lib{jpeg}: win/def{jpeg62-memsrcdst}: include = $windows
+libs{jpeg}: src/vsc{libjpeg}: include = ($linux || $bsd ? adhoc : false)
 
 # Generated headers.
 #
@@ -93,11 +84,11 @@ using autoconf
 
 # Create a numeric version of the package version number. The format is
 # <major><minor><patch> where the minor and patch numbers are left-padded with
-# zeros to three digits. For example, 2.1.3 becomes 2001003.
+# zeros to three digits. For example, 3.2.1 becomes 3002001.
 #
 vp = $version.patch
 vm = $version.minor
-for i : 0 1
+for i: 0 1
 {
   if ($size($vp) < 3)
     vp = "0$vp"
@@ -110,29 +101,84 @@ ver_num = "$version.major$vm$vp"
 # 6.2 because that's the library version used by libjpeg v6b which is the
 # API/ABI we're emulating (see README-DEV).
 #
-# This value is tricky to parse from the upstream build (see CMakeListst.txt)
-# but is unlikely to change so hardcoding it here seems reasonable.
-#
 libver_major = 6
 libver_minor = 2
 
-# The Windows jconfig.h.in has a couple of typedefs at the end that the other
-# one does not.
-#
-h{jconfig}: win/in{jconfig}: include = $windows
-h{jconfig}: in{jconfig}:     include = (!$windows)
+size_t = ($regex.match($c.target.cpu, 'i[3-6]86|arm|armv[4-7].*|mips|powerpc') \
+          ? 4                                                                 \
+          : 8)
 
-h{jconfig}:
+src/h{jconfig}: src/in{jconfig}
 {
   # The JPEG library version ID (used, for example, in feature checks).
   #
   JPEG_LIB_VERSION = $libver_major$libver_minor
 
+  # "Define if your (broken) compiler shifts signed values as if they were
+  # unsigned."
+  #
+  RIGHT_SHIFT_IS_UNSIGNED = false
+}
+
+src/h{jconfigint}: src/in{jconfigint}
+{
+  # Used as part of the libjpeg version string. The upstream default is
+  # `%Y%m%d`. Note that upstream always uses it in combination with version
+  # so we will make it just the snapshot part (if any).
+  #
+  BUILD = "$version.snapshot_string"
+
+  # How upstream hides the global symbols that are not part of the API.
+  #
+  HIDDEN = ($windows ? '' : '__attribute__((visibility("hidden")))')
+
+  # Upstream forces inlining by default (FORCE_INLINE).
+  #
+  INLINE = ($msvc                                                             \
+            ? '__forceinline'                                                 \
+            : 'inline __attribute__((always_inline))')
+
+  # This is only used in the implementation of the TurboJPEG API (which we
+  # disable).
+  #
+  THREAD_LOCAL = ($msvc ? '__declspec(thread)' : '__thread')
+
+  # Defines the `PACKAGE_NAME` macro which is embedded inside images by the
+  # compressor.
+  #
+  CMAKE_PROJECT_NAME = $project
+
+  SIZE_T = $size_t
+
+  # "Define if your compiler has __builtin_ctzl() and sizeof(unsigned long) ==
+  # sizeof(size_t)."
+  #
+  HAVE_BUILTIN_CTZL = (!$msvc && !$windows)
+
+  HAVE_INTRIN_H = $msvc
+
+  SIMD_ARCHITECTURE = NONE
+  WITH_SIMDE = false
+
+  WITH_PROFILE = false
+}
+
+src/h{jversion}: src/in{jversion}
+{
+  COPYRIGHT_YEAR = '1991-2026'
+}
+
+# Common generated header variables.
+#
+src/h{jconfig} src/h{jconfigint}:
+{
+  autoconf.flavor = cmake
+
   # The project version number.
   #
-  LIBJPEG_TURBO_VERSION_NUMBER = $ver_num
+  VERSION = "$version.major.$version.minor.$version.patch"
 
-  BITS_IN_JSAMPLE = 8
+  LIBJPEG_TURBO_VERSION_NUMBER = $ver_num
 
   # WITH_ARITH_DEC and WITH_ARITH_ENC are defined by default in the upstream
   # build (which causes the variables below to be defined to 1); see
@@ -141,111 +187,37 @@ h{jconfig}:
   # Note: If these are ever disabled, remove c{jaricom jcarith jdarith} from
   #       the build.
   #
-  C_ARITH_CODING_SUPPORTED = 1
-  D_ARITH_CODING_SUPPORTED = 1
+  C_ARITH_CODING_SUPPORTED = true
+  D_ARITH_CODING_SUPPORTED = true
 
-  # "Include in-memory source/destination manager functions when emulating the
-  # libjpeg v6b or v7 API/ABI". (We do v6b, the upstream default.)
-  #
-  # Note: remember to change def{jpeg62-memsrcdst} to def{jpeg62} above if
-  #       this is ever disabled.
-  #
-  MEM_SRCDST_SUPPORTED = 1
-
-  # Note that this macro controls only types and constants; the SIMD functions
-  # are called unconditionally (there are separate source files for the SIMD
-  # and non-SIMD/no-op implementations).
-  #
-  # @@ TODO: SIMD support requires assembly.
-  #
-  WITH_SIMD = 0
-
-  # "Define if your (broken) compiler shifts signed values as if they were
-  # unsigned."
-  #
-  RIGHT_SHIFT_IS_UNSIGNED = 0
-}
-
-# Extract values from the upstream CMakeLists.txt. Parse the file only once,
-# saving the lines of interest in memory, then extract the value from each
-# line.
-#
-re1 = '^\s*project\((.+) .+\)'
-re2 = '^\s*set\(COPYRIGHT_YEAR\s+"(.+)"\)'
-re3 = '^\s*set\(MEM_SRCDST_FUNCTIONS\s+"(.+)"\)'
-lines = $process.run_regex(cat $src_base/CMakeLists.txt, "$re1|$re2|$re3")
-projname       = $regex.merge($lines, $re1, '\1', '', format_first_only format_no_copy)
-copyright      = $regex.merge($lines, $re2, '\1', '', format_first_only format_no_copy)
-exported_funcs = $regex.merge($lines, $re3, '\1', '', format_first_only format_no_copy)
-
-# Internal library configuration header.
-#
-h{jconfigint}: in{jconfigint}
-{
-  # Used as part of the libjpeg version string. The upstream default is
-  # `%Y%m%d`.
-  #
-  # Note that upstream always uses it in combination with version so we
-  # will make it just the stapshot part (if any).
-  #
-  BUILD = "$version.snapshot_string"
-
-  # While upstream first probes for `__inline` (MSVC) and `__inline__` (rest)
-  # before `inline`, we will default to `inline` for now.
-  #
-  # They also default to forcing inline (always_inline) enabled.
-  #
-  INLINE = inline
-
-  # This is only used in the implementation of the TurboJPEG API (which we
-  # disable).
-  #
-  THREAD_LOCAL =
-
-  # Defines the `PACKAGE_NAME` macro which is embedded inside images by the
-  # compressor.
-  #
-  CMAKE_PROJECT_NAME = $projname
-}
-
-h{jversion}: in{jversion}
-{
-  COPYRIGHT_YEAR = $copyright
-}
-
-# Common generated header variables/settings.
-#
-h{jconfig} h{jconfigint}:
-{
-  autoconf.flavor = cmake
-  VERSION = "$version.major.$version.minor.$version.patch"
+  WITH_SIMD = false
 }
 
 # Linker version script.
 #
-vsc{libjpeg}: in{libjpeg}
+src/vsc{libjpeg}: src/in{libjpeg}
 {
   # The library version number.
   #
   JPEG_LIB_VERSION_DECIMAL = $libver_major.$libver_minor
 
-  # Functions exported by name.
+  # Functions exported by name (upstream's MEM_SRCDST_FUNCTIONS).
   #
-  MEM_SRCDST_FUNCTIONS = $exported_funcs
+  MEM_SRCDST_FUNCTIONS = 'global:  jpeg_mem_dest;  jpeg_mem_src;'
 }
 
 # Build options.
 #
-c.poptions =+ "-I$out_base" "-I$src_base"
+c.poptions =+ "-I$out_base/src" "-I$src_base/src"
 
-if ($c.id == 'msvc')
-  c.poptions += -D_CRT_NONSTDC_NO_WARNINGS
+if $msvc
+  c.poptions += -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS
 elif ($linux || $bsd)
-  c.loptions += "-Wl,--version-script=$out_base/libjpeg.map"
+  c.loptions += "-Wl,--version-script=$out_base/src/libjpeg.map"
 
 # Export options.
 #
-lib{jpeg}: c.export.poptions = "-I$out_base" "-I$src_base"
+lib{jpeg}: c.export.poptions = "-I$out_base/src" "-I$src_base/src"
 
 # For pre-releases use the complete version to make sure they cannot be used
 # in place of another pre-release or the final version. See the version module
@@ -258,5 +230,7 @@ else
 
 # Install public headers directly into, say, /usr/include/.
 #
-h{*}: install = false
-h{jconfig} h{jerror}@./ h{jmorecfg}@./ h{jpeglib}@./: install = include/
+src/h{*}: install = false
+src/h{jconfig}: install = include/
+src/h{jerror}@./src/ src/h{jmorecfg}@./src/ src/h{jpeglib}@./src/:            \
+  install = include/
