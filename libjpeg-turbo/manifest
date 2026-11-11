@@ -5,6 +5,7 @@ name: libjpeg-turbo
 #
 version: 3.2.1-a.0.z
 
+language: c
 summary: JPEG image codec C library
 license: IJG, LicenseRef-modified-BSD-3-clause, Zlib ; IJG: Independent JPEG Group license.
 description-file: README.md
