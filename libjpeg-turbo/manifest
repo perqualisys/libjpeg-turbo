@@ -9,6 +9,7 @@ language: c
 summary: JPEG image codec C library
 license: IJG, LicenseRef-modified-BSD-3-clause, Zlib ; IJG: Independent JPEG Group license.
 description-file: README.md
+package-description-file: PACKAGE-README.md
 changes-file: ChangeLog.md
 # Omit old changelog since of inconsistent text type.
 #changes-file: change.log ; Changes merged from IJG libjpeg.
