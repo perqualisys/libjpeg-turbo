@@ -4,27 +4,6 @@
 #
 .build2/local/
 
-# Compiler/linker output.
+# Compilation database.
 #
-*.d
-*.t
-*.i
-*.i.*
-*.ii
-*.ii.*
-*.o
-*.obj
-*.gcm
-*.pcm
-*.ifc
-*.so
-*.dll
-*.a
-*.lib
-*.exp
-*.pdb
-*.ilk
-*.exe
-*.exe.dlls/
-*.exe.manifest
-*.pc
+compile_commands.json
