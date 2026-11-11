@@ -1,0 +1,1 @@
+../../../../upstream/simd/x86_64/jidctint-sse2.asm

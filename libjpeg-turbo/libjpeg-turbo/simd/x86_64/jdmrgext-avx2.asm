@@ -1,0 +1,1 @@
+../../../../upstream/simd/x86_64/jdmrgext-avx2.asm

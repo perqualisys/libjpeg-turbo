@@ -1,0 +1,1 @@
+../../../../upstream/simd/x86_64/jfdctint-sse2.asm

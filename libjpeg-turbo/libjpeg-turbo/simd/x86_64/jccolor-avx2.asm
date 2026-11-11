@@ -1,0 +1,1 @@
+../../../../upstream/simd/x86_64/jccolor-avx2.asm
